@@ -49,10 +49,13 @@ export default function App() {
 
   const [previewContent, setPreviewContent] = useState(null);
 
-  // Sync Firebase
+  // Sync Firebase com Ordenação Alfabética dos Clientes
   useEffect(() => {
     const unsubClients = onSnapshot(collection(db, 'clients'), (snapshot) => {
-      setClients(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const loadedClients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Ordenação Alfabética A-Z
+      loadedClients.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR', { sensitivity: 'base' }));
+      setClients(loadedClients);
     });
     const unsubContents = onSnapshot(collection(db, 'contents'), (snapshot) => {
       setContents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -141,7 +144,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-12">
-      {/* Cabeçalho do App (Design da Imagem 1) */}
+      {/* Cabeçalho do App */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -160,7 +163,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Filtro Global de Cliente */}
+            {/* Filtro Global de Cliente (Já em Ordem Alfabética) */}
             <div className="flex items-center gap-3">
               <select 
                 value={selectedClient} 
@@ -228,7 +231,7 @@ export default function App() {
       {/* Conteúdo Principal */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         
-        {/* DASHBOARD PRINCIPAL (Design idêntico à Imagem 1) */}
+        {/* DASHBOARD PRINCIPAL */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
             {/* Cards Superiores */}
@@ -278,7 +281,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Painel de Ações Rápidas (Barra Azul/Roxa da Imagem 1) */}
+            {/* Painel de Ações Rápidas */}
             <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-900 p-6 rounded-2xl shadow-xl text-white flex flex-col sm:flex-row justify-between items-center gap-4">
               <div>
                 <h2 className="text-lg font-bold">Painel de Ações Rápidas</h2>
@@ -330,7 +333,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Margem de Lucro por Cliente */}
+              {/* Margem de Lucro por Cliente (Em Ordem Alfabética) */}
               <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
                 <h3 className="font-bold text-slate-900 flex items-center gap-2 mb-4">
                   <Percent className="w-4 h-4 text-emerald-600" /> Margem de Lucro por Cliente
@@ -362,11 +365,14 @@ export default function App() {
           </div>
         )}
 
-        {/* CLIENTES */}
+        {/* CLIENTES (Lista Exibida em Ordem Alfabética A-Z) */}
         {activeTab === 'clients' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-bold text-slate-900">Clientes Cadastrados</h2>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Clientes Cadastrados (A-Z)</h2>
+                <p className="text-xs text-slate-500">Listados automaticamente em ordem alfabética.</p>
+              </div>
               <button onClick={() => setIsClientModalOpen(true)} className="flex items-center gap-1.5 bg-indigo-600 text-white text-sm font-bold px-3.5 py-2 rounded-lg">
                 <Plus className="w-4 h-4" /> Novo Cliente
               </button>
@@ -401,7 +407,7 @@ export default function App() {
           </div>
         )}
 
-        {/* PLANEJAMENTO DE CONTEÚDO (Visual Quadro Kanban Avançado) */}
+        {/* PLANEJAMENTO DE CONTEÚDO */}
         {activeTab === 'content' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -414,7 +420,6 @@ export default function App() {
               </button>
             </div>
 
-            {/* Colunas do Kanban */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {statusColumns.map(col => {
                 const colPosts = filteredContents.filter(c => (c.status || 'Ideia') === col);
@@ -448,7 +453,6 @@ export default function App() {
                               </button>
                             )}
 
-                            {/* Mudar de fase no Kanban */}
                             <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-[11px]">
                               <span className="text-slate-400">{post.date}</span>
                               <select 
@@ -470,7 +474,7 @@ export default function App() {
           </div>
         )}
 
-        {/* FINANCEIRO DEDICADO POR CLIENTE */}
+        {/* FINANCEIRO */}
         {activeTab === 'finance' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -526,7 +530,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ACESSOS E LINKS DE ARQUIVOS */}
+        {/* ACESSOS E LINKS */}
         {activeTab === 'links' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
