@@ -6,7 +6,7 @@ import {
 import { 
   Users, DollarSign, Calendar, Link as LinkIcon, Plus, LayoutDashboard, 
   Trash2, ExternalLink, ArrowUpRight, ArrowDownRight, Percent, CheckCircle, 
-  Clock, FileText, Share2, Tag, Layers, Search, Eye, X, Target, PhoneCall, MessageSquare, Award
+  Clock, FileText, Share2, Tag, Layers, Search, Eye, X, Target, Palette
 } from 'lucide-react';
 
 // =========================================================
@@ -24,18 +24,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// PALETA DE CORES PERSONALIZADAS PARA CLIENTES
-const COLOR_OPTIONS = [
-  { id: 'indigo', name: 'Azul Escuro', bg: 'bg-indigo-100', text: 'text-indigo-800', border: 'border-indigo-200' },
-  { id: 'sky', name: 'Azul Claro', bg: 'bg-sky-100', text: 'text-sky-800', border: 'border-sky-200' },
-  { id: 'black', name: 'Preto', bg: 'bg-slate-900', text: 'text-white', border: 'border-slate-900' },
-  { id: 'gray', name: 'Cinzento', bg: 'bg-slate-200', text: 'text-slate-800', border: 'border-slate-300' },
-  { id: 'wine', name: 'Vinho', bg: 'bg-rose-900', text: 'text-rose-100', border: 'border-rose-900' },
-  { id: 'gold', name: 'Ouro Pastel', bg: 'bg-amber-100', text: 'text-amber-800', border: 'border-amber-200' },
-  { id: 'pink', name: 'Rosa', bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-200' },
-  { id: 'guava', name: 'Goiaba', bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-200' }
-];
-
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedClient, setSelectedClient] = useState('all');
@@ -49,7 +37,7 @@ export default function App() {
 
   // Modais
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
-  const [newClient, setNewClient] = useState({ name: '', contact: '', niche: '', fee: '', dueDate: '', color: 'indigo', tags: '' });
+  const [newClient, setNewClient] = useState({ name: '', contact: '', niche: '', fee: '', dueDate: '', color: '#4F46E5', tags: '' });
 
   const [isContentModalOpen, setIsContentModalOpen] = useState(false);
   const [newContent, setNewContent] = useState({ clientId: '', title: '', format: 'Carrossel', channel: 'Instagram', status: 'Ideia', date: '', copy: '' });
@@ -104,10 +92,10 @@ export default function App() {
       niche: newClient.niche,
       fee: Number(newClient.fee) || 0,
       dueDate: Number(newClient.dueDate) || 1,
-      color: newClient.color || 'indigo',
+      color: newClient.color || '#4F46E5',
       tags: newClient.tags ? newClient.tags.split(',').map(t => t.trim()) : []
     });
-    setNewClient({ name: '', contact: '', niche: '', fee: '', dueDate: '', color: 'indigo', tags: '' });
+    setNewClient({ name: '', contact: '', niche: '', fee: '', dueDate: '', color: '#4F46E5', tags: '' });
     setIsClientModalOpen(false);
   };
 
@@ -157,11 +145,29 @@ export default function App() {
     await deleteDoc(doc(db, coll, id));
   };
 
-  // Helper para resgatar estilo da tag de cor do cliente
-  const getClientBadgeStyle = (clientObj) => {
-    const colorId = clientObj?.color || 'indigo';
-    const found = COLOR_OPTIONS.find(c => c.id === colorId);
-    return found ? `${found.bg} ${found.text}` : 'bg-indigo-100 text-indigo-800';
+  // Função para determinar a cor do texto (Preto ou Branco) com base no fundo HEX
+  const getContrastTextColor = (hexColor) => {
+    if (!hexColor || !hexColor.startsWith('#')) return '#FFFFFF';
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16) || 0;
+    const g = parseInt(hex.substring(2, 4), 16) || 0;
+    const b = parseInt(hex.substring(4, 6), 16) || 0;
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+    return yiq >= 128 ? '#1E293B' : '#FFFFFF';
+  };
+
+  // Renderizador de Badge com Cor Livre
+  const renderClientTag = (clientObj) => {
+    const bg = clientObj?.color || '#4F46E5';
+    const text = getContrastTextColor(bg);
+    return (
+      <span 
+        style={{ backgroundColor: bg, color: text }}
+        className="text-[10px] font-bold px-2.5 py-0.5 rounded-md inline-block shadow-sm"
+      >
+        {clientObj?.name || 'Cliente'}
+      </span>
+    );
   };
 
   // Cálculos Financeiros
@@ -341,7 +347,7 @@ export default function App() {
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-base sm:text-lg font-bold text-slate-900">Clientes Cadastrados</h2>
-                <p className="text-xs text-slate-500">Organizados por ordem alfabética com cor de tag personalizada.</p>
+                <p className="text-xs text-slate-500">Organizados por ordem alfabética com cor de tag customizável.</p>
               </div>
               <button onClick={() => setIsClientModalOpen(true)} className="flex items-center gap-1 bg-indigo-600 text-white text-xs sm:text-sm font-bold px-3 py-2 rounded-lg">
                 <Plus className="w-4 h-4" /> Novo Cliente
@@ -351,16 +357,12 @@ export default function App() {
               {clients.map(c => (
                 <div key={c.id} className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm relative hover:border-indigo-200 transition">
                   <div className="flex justify-between items-start gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getClientBadgeStyle(c)}`}>
-                        {c.name}
-                      </span>
-                    </div>
+                    <div>{renderClientTag(c)}</div>
                     <button onClick={() => handleDeleteDoc('clients', c.id)} className="text-slate-400 hover:text-rose-600 transition shrink-0">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                  <p className="text-xs text-slate-500 mt-2">Contato: {c.contact || 'Não informado'}</p>
+                  <p className="text-xs text-slate-500 mt-3">Contato: {c.contact || 'Não informado'}</p>
                   <p className="text-xs text-slate-500">Nicho: {c.niche || 'Geral'}</p>
                   <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs sm:text-sm">
                     <span className="font-bold text-emerald-600">R$ {c.fee}/mês</span>
@@ -372,7 +374,7 @@ export default function App() {
           </div>
         )}
 
-        {/* CRM & FUNIL DE VENDAS (NOVA ABA) */}
+        {/* CRM */}
         {activeTab === 'crm' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -428,7 +430,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ACESSOS E LINKS (COM CORES DAS TAGS DAS MARCAS) */}
+        {/* ACESSOS E LINKS (COM CORES LIVRES) */}
         {activeTab === 'links' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -447,10 +449,7 @@ export default function App() {
                 return (
                   <div key={l.id} className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center hover:border-indigo-200 transition">
                     <div>
-                      {/* Tag do Cliente com Cor Selecionada */}
-                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md inline-block mb-1.5 ${getClientBadgeStyle(client)}`}>
-                        {client?.name || 'Cliente'}
-                      </span>
+                      <div className="mb-1.5">{renderClientTag(client)}</div>
                       <h4 className="font-bold text-slate-900 text-sm">{l.title}</h4>
                       <a href={l.url} target="_blank" rel="noreferrer" className="text-xs text-indigo-600 font-semibold flex items-center gap-1 mt-1.5 hover:underline">
                         Abrir em nova aba <ExternalLink className="w-3 h-3" />
@@ -466,7 +465,7 @@ export default function App() {
           </div>
         )}
 
-        {/* PLANEJAMENTO DE CONTEÚDO */}
+        {/* CONTEÚDO */}
         {activeTab === 'content' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -495,7 +494,7 @@ export default function App() {
                         return (
                           <div key={post.id} className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-2">
                             <div className="flex justify-between items-start gap-2">
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${getClientBadgeStyle(client)}`}>{client?.name || 'Cliente'}</span>
+                              <div>{renderClientTag(client)}</div>
                               <button onClick={() => handleDeleteDoc('contents', post.id)} className="text-slate-300 hover:text-rose-600 shrink-0">
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -579,7 +578,7 @@ export default function App() {
 
       </main>
 
-      {/* MODAL CLIENTE (COM SELETOR DE COR) */}
+      {/* MODAL CLIENTE (COM SELETOR DE COR LIVRE / COLOR PICKER) */}
       {isClientModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl">
@@ -590,20 +589,35 @@ export default function App() {
                 <input required type="text" value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})} className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
               </div>
 
-              {/* Seletor de Cor da Tag */}
+              {/* Seletor de Cor do Sistema / Hexadecimal */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Cor da Tag do Cliente</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {COLOR_OPTIONS.map(col => (
-                    <button
-                      key={col.id}
-                      type="button"
-                      onClick={() => setNewClient({...newClient, color: col.id})}
-                      className={`p-2 rounded-lg text-xs font-bold border flex items-center justify-center gap-1 ${col.bg} ${col.text} ${newClient.color === col.id ? 'ring-2 ring-indigo-600 ring-offset-1 font-extrabold' : 'opacity-80'}`}
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
+                  <Palette className="w-3.5 h-3.5 text-indigo-600" /> Cor da Tag do Cliente
+                </label>
+                <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                  <input 
+                    type="color" 
+                    value={newClient.color} 
+                    onChange={e => setNewClient({...newClient, color: e.target.value})} 
+                    className="w-10 h-10 rounded-lg border-0 cursor-pointer bg-transparent p-0"
+                  />
+                  <div className="flex-1">
+                    <input 
+                      type="text" 
+                      value={newClient.color} 
+                      onChange={e => setNewClient({...newClient, color: e.target.value})} 
+                      className="w-full text-xs font-mono font-bold bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-slate-800 uppercase"
+                      placeholder="#4F46E5"
+                    />
+                  </div>
+                  <div className="shrink-0">
+                    <span 
+                      style={{ backgroundColor: newClient.color, color: getContrastTextColor(newClient.color) }}
+                      className="text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-sm"
                     >
-                      {col.name}
-                    </button>
-                  ))}
+                      Prévia
+                    </span>
+                  </div>
                 </div>
               </div>
 
