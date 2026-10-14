@@ -145,7 +145,7 @@ export default function App() {
     await deleteDoc(doc(db, coll, id));
   };
 
-  // Função para determinar a cor do texto (Preto ou Branco) com base no fundo HEX
+  // Determina a cor do texto (Preto ou Branco) com base no contraste do fundo HEX
   const getContrastTextColor = (hexColor) => {
     if (!hexColor || !hexColor.startsWith('#')) return '#FFFFFF';
     const hex = hexColor.replace('#', '');
@@ -156,7 +156,7 @@ export default function App() {
     return yiq >= 128 ? '#1E293B' : '#FFFFFF';
   };
 
-  // Renderizador de Badge com Cor Livre
+  // Renderizador de Badge com Cor Livre Selecionada
   const renderClientTag = (clientObj) => {
     const bg = clientObj?.color || '#4F46E5';
     const text = getContrastTextColor(bg);
@@ -430,7 +430,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ACESSOS E LINKS (COM CORES LIVRES) */}
+        {/* ACESSOS E LINKS */}
         {activeTab === 'links' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -578,7 +578,7 @@ export default function App() {
 
       </main>
 
-      {/* MODAL CLIENTE (COM SELETOR DE COR LIVRE / COLOR PICKER) */}
+      {/* MODAL CLIENTE (SELETOR DE COR DA TAG) */}
       {isClientModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl">
@@ -589,7 +589,7 @@ export default function App() {
                 <input required type="text" value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})} className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
               </div>
 
-              {/* Seletor de Cor do Sistema / Hexadecimal */}
+              {/* Seletor de Cor Livre (Color Picker + Hex) */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
                   <Palette className="w-3.5 h-3.5 text-indigo-600" /> Cor da Tag do Cliente
